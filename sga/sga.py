@@ -11,10 +11,6 @@ Other variations are sub-classes of these.
 
 import random
 
-import AChemKit
-import AChemKit.utils
-from AChemKit.utils import pool
-
 
 class Gene(object):
     """
