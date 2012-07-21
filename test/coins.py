@@ -6,46 +6,40 @@ Coins example
 The problem is this:
 
 You work in a pet shop. A customer
-buys a parrot. 
+buys a parrot
 
-Given that the parrot cost 26.38, the 
+Given that the parrot cost 26.38, the
 customer gave you a 50.00 note, and your till
-contains only 17 x 100, 63 x 50p, 12 x 20p, 
+contains only 17 x 100, 63 x 50p, 12 x 20p
 and 142 x 2p coins, which coins should you give
 to the customer in change?
 
 """
 
-def foo(bar):
-    """I am A DummY"""
-    pass
 
 #fudge to use this version because its not installed
 #TODO remove
-import sys
-import os.path
 
-import sga
+#import sga
 import sga.sga as sga
 
 
-if __name__=="__main__":
+if __name__ == "__main__":
     #create a fitness function
     #will be passed a genome as the parameter
     #should return an integer or float > 0.0
     def coins_fitness(genome):
         total = 0
-        total += 100*genome[0][0]
-        total +=  50*genome[0][1]
-        total +=  20*genome[0][2]
-        total +=   2*genome[0][3]
+        total += 100 * genome[0][0]
+        total += 50 * genome[0][1]
+        total += 20 * genome[0][2]
+        total += 2 * genome[0][3]
         error = abs(2638 - total)
         #because high fittness means better
         #need to subtract error from a perfect score
         fitness = 10000 - error
         return fitness
-    
-    
+
     #create a genome template
     #should be tuple of tuples of sga.Gene
     #one chromosome
@@ -53,10 +47,13 @@ if __name__=="__main__":
     #   number of   50p coins
     #   number of   20p coins
     #   number of    2p coins
-    genome = ((sga.Gene(range(17)), sga.Gene(range(63)), sga.Gene(range(12)), sga.Gene(range(142)) ),)
-    
+    genome = ((sga.Gene(range(17)),
+               sga.Gene(range(63)),
+               sga.Gene(range(12)),
+               sga.Gene(range(142))),)
+
     ga = sga.GeneticAlg(100, 1000, genome, coins_fitness)
-    
+
     print "Best fitness:", ga.scores[0][0]
     print "Best genome:", ga.scores[0][1]
     #now express the results in a framework that is relevant to the problem

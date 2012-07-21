@@ -14,7 +14,7 @@ import random
 
 class Gene(object):
     """
-    This is the base class for Gene objects. These do not 
+    This is the base class for Gene objects. These do not
     represent a specific gene on one chromosme, rather
     it representes all possible genes that exist at that
     position - the different alleles (values).
@@ -24,7 +24,7 @@ class Gene(object):
         """
         To initialize, simply pass the list of possible values.
         This will be kept for later mutation between them.
-        
+
         Recommended to pass a tuple to avoid accidental modification.
         This is not enforced as you may want to change values over time
         and this way it can be done, if not recommended
@@ -36,32 +36,35 @@ class Gene(object):
             rng = random.Random()
         values = self.values
         #when we randomize, we want to make sure we actually change
-        #otherwise the net real mutation rate is not the same as 
+        #otherwise the net real mutation rate is not the same as
         #the specified gross mutation rate
         #If there are a larger number of values, this may be an
         #inefficient way to do it.
         if old is not None:
             values = [x for x in values if x != old]
         return rng.choice(values)
-    
+
     def __repr__(self):
         """
         Simple string representation to aid debugging.
         """
-        return "<"+str(self.values)+">"
+        return "<" + str(self.values) + ">"
+
 
 class GeneticAlg(object):
     """
-    Base class for the Genetic Algorithm itself. 
+    Base class for the Genetic Algorithm itself.
     """
-    
+
     minfitness = None
-    
-    def __init__(self, populationsize, generations, genomepattern, fitness_function, survival=0.1, rng=None, avgmutations=1.0, mutationrate = None):
+
+    def __init__(self, populationsize, generations, genomepattern,
+                 fitness_function, survival=0.1, rng=None, avgmutations=1.0,
+                 mutationrate=None):
         """
         Constructor to create a GA.
         Currently, this also starts it running, which is probably a bad idea.
-        
+
         TODO: describe parameters
         """
         assert populationsize > 0
@@ -72,26 +75,28 @@ class GeneticAlg(object):
         assert len(genomepattern) > 0
         assert len(genomepattern[0]) > 0
         self.genomepattern = genomepattern
-        
+
         #in python, functions are object too
         #therefore rather than calling the passed
-        #function now, we store it so it can 
+        #function now, we store it so it can
         #be called in the future
         self.fitness_function = fitness_function
-        
+
         #proportion survival rate
         #higher is quicker optimization, but may be premature.
         #best value depends on particular problem
         assert survival > 0.0 and survival < 1.0
         self.survival = survival
-        
+
         #mutation is expressed either as a probability per gene
         #or as an average per genome per generation
         if mutationrate is None:
             assert avgmutations is not None
-            #avgmutations is the number of mutations per genome per generation on average
-            self.mutationrate = float(sum((len(x) for x in genomepattern))) / avgmutations
-            
+            # avgmutations is the number of mutations per genome per generation
+            # on average
+            self.mutationrate = float(sum((len(x) for x in genomepattern)))\
+                                / avgmutations
+
         if rng is None:
             self.rng = random.Random()
         else:
@@ -104,41 +109,43 @@ class GeneticAlg(object):
             self.generationno += 1
             self.evol_population()
             self.score_population()
-    
+
     def genome_make(self):
         """
         Creates a new genome based on self.chromosomepatterns.
         Uses the selfs random number generator, which may have
         been seeded.
-        
-        Genome return is a tuple of tuples of alleles. 
+
+        Genome return is a tuple of tuples of alleles.
         """
         genome = ()
         for chromosomepattern in self.genomepattern:
             chromosome = ()
             for genepattern in chromosomepattern:
                 #adding tuples concatenates
-                chromosome = chromosome + (genepattern.randomize(rng = self.rng),)
+                chromosome += (genepattern.randomize(rng=self.rng),)
             genome = genome + (chromosome,)
         return genome
 
     def genome_mutate(self, genome):
         """
-        Returns a mutated copy of a genome. 
-        Genome must match self.chromosomepatterns, which it will do if created via
-        self.genomemake or self.genomemutate.
+        Returns a mutated copy of a genome.
+        Genome must match self.chromosomepatterns, which it will do if created
+        via self.genomemake or self.genomemutate.
         Mutation rate is based on self.mutationrate.
-        
+
         This does not do cross-over.
-        This does not do duplication/deletion, and can't unless changes are made to 
-        self.chromosomepatterns too.
+
+        This does not do duplication/deletion, and can't unless changes are
+        made to self.chromosomepatterns too.
         """
         genomeout = ()
         for chromosome, chromosomepattern in zip(genome, self.genomepattern):
             chromosomeout = ()
             for gene, genepattern in zip(chromosome, chromosomepattern):
                 if random.random() < self.mutationrate:
-                    chromosomeout = chromosomeout + (genepattern.randomize(rng = self.rng, old = gene),)
+                    chromosomeout += (genepattern.randomize(rng=self.rng,
+                                                            old=gene),)
                 else:
                     chromosomeout = chromosomeout + (gene, )
             genomeout = genomeout + (chromosomeout,)
@@ -161,16 +168,16 @@ class GeneticAlg(object):
         Calculates the fitness of each individual in the population.
         Then sorts the population in descending fitness order.
         Ties are broken randomly.
-        
+
         Rather than returning the scores, it sets the self.scores variable
         This it to discourage repeated fitness calculations becaue it can
         be a computationally expensive process.
-        
+
         The genomes of the current generation are stored with the scores.
         This is to make it easy to see which genome got which score, rather
         than assuming self.population and self.scores have the same ordering.
         """
-        scores = [None]*len(self.population)
+        scores = [None] * len(self.population)
         for i in xrange(len(self.population)):
             self.fitness_function.generationno = self.generationno
             self.fitness_function.individual = i
@@ -188,30 +195,30 @@ class GeneticAlg(object):
     def evol_population(self):
         """
         Evolves a new generation of the population based on
-        the fitness values calculated by score_population. 
-        
+        the fitness values calculated by score_population.
+
         Replaces self.population with the new generation.
         """
         assert len(self.scores) == len(self.population)
-        survivecount = int(len(self.scores)*self.survival)
+        survivecount = int(len(self.scores) * self.survival)
         #ensure there is at least one survivor
         if survivecount < 1:
             survivecount = 1
-            
+
         survived = self.scores[:survivecount]
         killed = self.scores[survivecount:]
         assert len(survived) + len(killed) == len(self.population)
         #we should kill something or there is no room for births
         assert len(killed) > 0
-        
+
         newgenomes = []
         parents = []
-        
+
         #see what survived to go to the next generation
         for fitness, genome in tuple(survived):
             #fitnesses below the minimal score are gross
             #malformations - such as invalid data or other
-            #very bad things. 
+            #very bad things.
             #if this is the best we can do then we might
             #as well try things at random to find a better
             #area of the fitness landscape
@@ -233,10 +240,10 @@ class GeneticAlg(object):
                 #mutate a random parent
                 #more sucessfull parents have more chance to be picked
                 newgenomes.append(self.genome_mutate(random.choice(parents)))
-            
-        assert len(newgenomes) == len(self.population)    
+
+        assert len(newgenomes) == len(self.population)
         self.population = newgenomes
-            
+
 
 def dummy_fit(genome):
     print genome
